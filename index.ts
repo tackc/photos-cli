@@ -1,6 +1,7 @@
 #! /usr/bin/env node
 import * as fs from "fs";
 import * as path from "path";
+import * as readline from "readline/promises";
 
 interface IArgs {
   help: boolean;
@@ -27,10 +28,20 @@ if (process.argv.length === 2) {
     if (arg === "-p" || arg === "--path") {
       args.path = true;
     }
-    if (arg === "-d" || arg === "-directory") {
-      args.directory = process.argv[i + 1];
+    if (arg === "-d" || arg === "--directory") {
+      let directory = process.argv[i + 1];
+      if (directory) {
+        args.directory = directory;
+      } else {
+        const rl = readline.createInterface(process.stdin, process.stdout);
+        const answer = await rl.question(
+          "Please enter a directory path or hit 'Enter' for the current directory\n"
+        );
+        args.directory = answer || ".";
+        rl.close();
+      }
     }
-    if (arg === "-r" || arg === "-recursive") {
+    if (arg === "-r" || arg === "--recursive") {
       args.recursive = true;
     }
   }
@@ -44,12 +55,17 @@ if (args.help) {
     console.log(directoryCount);
   } else {
     const contents = fs.readdirSync(args.directory, { withFileTypes: true });
+    const files: fs.Dirent[] = [];
+    const folders: fs.Dirent[] = [];
+
     contents.forEach((content) => {
-      const fullPath = path.resolve(path.join(args.directory, content.name));
-      args.path
-        ? console.log(fullPath + "\n")
-        : console.log(content.name + "\n");
+      content.isDirectory() ? folders.push(content) : files.push(content);
     });
+
+    files.forEach((file) => console.log(file.name));
+    folders.forEach((folder) =>
+      console.log(`******** ${folder.name} ********`)
+    );
   }
 }
 
@@ -132,3 +148,19 @@ function printDirectoryRecursively(dir: string) {
     console.log(error);
   }
 }
+
+// Current directory (where executed from) - pwd
+// 1. list files in that directory
+// 2. List directory ***************** node_modules ******************
+// 3. List files inside directory 
+
+// index.js
+// index.ts
+// package-lock.json
+// package.json
+// tsconfig.json
+  
+// ***************** .git *****************
+
+
+// ***************** node_modules *****************
