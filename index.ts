@@ -50,23 +50,7 @@ console.log(args);
 if (args.help) {
   printHelp();
 } else {
-  if (args.recursive) {
-    printDirectoryRecursively(args.directory);
-    console.log(directoryCount);
-  } else {
-    const contents = fs.readdirSync(args.directory, { withFileTypes: true });
-    const files: fs.Dirent[] = [];
-    const folders: fs.Dirent[] = [];
-
-    contents.forEach((content) => {
-      content.isDirectory() ? folders.push(content) : files.push(content);
-    });
-
-    files.forEach((file) => console.log(file.name));
-    folders.forEach((folder) =>
-      console.log(`******** ${folder.name} ********`)
-    );
-  }
+  printDirectory(args.directory, args.recursive);
 }
 
 function printHelp() {
@@ -129,24 +113,21 @@ function printHelp() {
   console.log(`   ~/Photos/_DSC08736.NEF`);
 }
 
-function printDirectoryRecursively(dir: string) {
-  try {
-    const contents = fs.readdirSync(dir, {
-      withFileTypes: true,
-    });
-    contents.forEach((content) => {
-      const fullPath = path.join(dir, content.name);
-      if (content.isDirectory()) {
-        directoryCount++;
-        args.path
-          ? console.log(fullPath + "\n")
-          : console.log(content.name + "\n");
-        printDirectoryRecursively(fullPath);
-      }
-    });
-  } catch (error) {
-    console.log(error);
-  }
+function printDirectory(directory: string, isRecursive: boolean) {
+  const contents = fs.readdirSync(directory, { withFileTypes: true });
+  const files: fs.Dirent[] = [];
+  const folders: fs.Dirent[] = [];
+
+  contents.forEach((content) => {
+    content.isDirectory() ? folders.push(content) : files.push(content);
+  });
+
+  files.forEach((file) => console.log(file.name));
+  folders.forEach((folder) => {
+    console.log(`******** ${folder.name} ********`);
+    isRecursive &&
+      printDirectory(path.join(directory, folder.name), isRecursive);
+  });
 }
 
 // Current directory (where executed from) - pwd
